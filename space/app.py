@@ -157,7 +157,7 @@ def build_app() -> gr.Blocks:
                 "Talk turn-by-turn — plants stick in **kernel STORAGE** across messages. "
                 "Try open phrasing: *By the way my name is Ada* → later *what name did I give you?*"
             )
-            chatbot = gr.Chatbot(label="Chat")
+            chatbot = gr.Chatbot(label="Chat", type="messages")
             chat_msg = gr.Textbox(label="Message", placeholder="Type and press Enter...")
             chat_session = gr.State(None)
             with gr.Row():

@@ -557,6 +557,14 @@ def _empty_chat_session() -> ChatSessionState | None:
         return None
 
 
+def _chat_messages(user: str, assistant: str) -> list[dict[str, str]]:
+    """Gradio 5 Chatbot (type='messages') expects role/content dicts."""
+    return [
+        {"role": "user", "content": user},
+        {"role": "assistant", "content": assistant},
+    ]
+
+
 def run_live_chat(message: str, history: list, session: ChatSessionState | None):
     """Gradio Chatbot — one message at a time; kernel memory persists in session."""
     if not str(message).strip():
@@ -566,9 +574,9 @@ def run_live_chat(message: str, history: list, session: ChatSessionState | None)
             session = init_chat_session(load_demo_chat_stack())
         session, reply, err = run_chat_turn(session, message)
         if err:
-            history = history + [[message, f"*(error)* {err}"]]
+            history = history + _chat_messages(message, f"*(error)* {err}")
             return history, session, "", format_log(session.state)
-        history = history + [[message, reply]]
+        history = history + _chat_messages(message, reply)
         tok = session.ledger.to_dict()
         stats = (
             f"queries **{session.metrics['query_hits']}/{session.metrics['queries']}** · "
@@ -578,10 +586,10 @@ def run_live_chat(message: str, history: list, session: ChatSessionState | None)
         )
         return history, session, stats, format_log(session.state)
     except FileNotFoundError as exc:
-        history = history + [[message, f"*(missing checkpoints)* {exc}"]]
+        history = history + _chat_messages(message, f"*(missing checkpoints)* {exc}")
         return history, session, "", ""
     except Exception as exc:
-        history = history + [[message, f"*(error)* {exc}"]]
+        history = history + _chat_messages(message, f"*(error)* {exc}")
         return history, session, "", str(exc)
 
 
