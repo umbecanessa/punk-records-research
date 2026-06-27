@@ -13,7 +13,7 @@ The reference kernel implementation lives in the `greenfield/` Python package (l
 | **Encoder E6** | Learned opcodes, slot keys, values (~120k params) |
 | **Renderer E3** | Untrusted text from storage (~1.3M params) |
 
-**Weights:** [Hugging Face — `punk-records-research-kernel-v0.1`](https://huggingface.co/umbecanessa/punk-records-research-kernel-v0.1)  
+**Weights:** [Hugging Face — `punk-records-research-kernel-v0.1`](https://huggingface.co/wasnaga/punk-records-research-kernel-v0.1)  
 Training labels come from **world ground truth**, not chat transcripts.
 
 ### Results (v0.1)
@@ -39,7 +39,7 @@ pip install -e ".[dev]"
 Download release weights:
 
 ```bash
-huggingface-cli download umbecanessa/punk-records-research-kernel-v0.1 \
+huggingface-cli download wasnaga/punk-records-research-kernel-v0.1 \
   --local-dir greenfield/checkpoints/hf
 ```
 

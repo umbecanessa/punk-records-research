@@ -47,7 +47,7 @@ Frozen reports in `eval/`. Reproduce with the GitHub repo + these weights.
 
 ```bash
 pip install -U "huggingface_hub[cli]"
-huggingface-cli download umbecanessa/punk-records-research-kernel-v0.1 --local-dir ./kernel-v0.1
+huggingface-cli download wasnaga/punk-records-research-kernel-v0.1 --local-dir ./kernel-v0.1
 ```
 
 | File | Description |
@@ -96,7 +96,7 @@ Values at inference come from **OBS percept bytes in features**, not chat payloa
 @software{punk_records_research_kernel_v01,
   title  = {Punk Records Research — Agent Kernel v0.1},
   year   = {2026},
-  url    = {https://huggingface.co/umbecanessa/punk-records-research-kernel-v0.1},
+  url    = {https://huggingface.co/wasnaga/punk-records-research-kernel-v0.1},
   note   = {8-opcode session state machine; structured-event training.}
 }
 ```

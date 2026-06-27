@@ -9,5 +9,6 @@
   "use_learned_values": true,
   "curriculum_stages": "A,B,C,D,E,F",
   "code_repo": "https://github.com/umbecanessa/punk-records-research",
+  "hf_repo": "wasnaga/punk-records-research-kernel-v0.1",
   "notes": "Hub bundle — paths relative to this model repo root."
 }
