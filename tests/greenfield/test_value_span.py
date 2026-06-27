@@ -60,6 +60,13 @@ def test_i_am_living_not_name_plant():
     assert detect_plant_slot("I'm living in Amsterdam") is None
 
 
+def test_i_am_zoe_name_plant():
+    p = parse_template_utterance("i'm Zoe")
+    assert p is not None
+    assert p.intent == Intent.PLANT
+    assert p.payload["value"] == "Zoe"
+
+
 def test_whats_my_name_query():
     p = parse_template_utterance("whats my name ?")
     assert p is not None

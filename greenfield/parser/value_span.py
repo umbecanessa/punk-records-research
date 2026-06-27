@@ -120,6 +120,7 @@ _ITEM_IDX_QUERY = re.compile(
     r"^\s*what(?:'s|\s+is)\s+item\s+(?P<idx>\d+)\s*\??\s*$",
     re.I,
 )
+_I_AM_NAME = re.compile(r"^i'?m\s+(?P<val>[A-Za-z]{2,12})\s*\.?\s*$", re.I)
 
 
 def strip_leading_fillers(text: str) -> str:
@@ -177,6 +178,10 @@ def extract_plant_value(text: str, slot: str | None = None) -> str:
     if m:
         return m.group("val").strip()
 
+    m = _I_AM_NAME.match(t)
+    if m and m.group("val").lower() not in _I_AM_BLOCKLIST:
+        return m.group("val")
+
     lower = t.lower()
     groups: list[tuple[str, tuple[str, ...]]] = []
     if slot == "fact.name" or slot is None:
@@ -211,6 +216,9 @@ def obs_value_hint(text: str) -> str:
 def detect_plant_slot(text: str) -> str | None:
     """Infer target slot from plant template prefix."""
     t = normalize_for_match(text)
+    m = _I_AM_NAME.match(t)
+    if m and m.group("val").lower() not in _I_AM_BLOCKLIST:
+        return "fact.name"
     lower = t.lower()
     for prefix in _NAME_PREFIXES:
         if lower.startswith(prefix):
