@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from greenfield.memory.dynamic_plant import parse_dynamic_utterance
 from greenfield.parser.value_span import (
     detect_plant_slot,
     extract_plant_value,
@@ -75,10 +76,10 @@ def test_whats_my_name_query():
 
 
 def test_where_do_i_live_unsupported():
-    p = parse_template_utterance("where do I live ?")
+    p = parse_dynamic_utterance("where do I live ?")
     assert p is not None
-    assert p.intent == Intent.CHITCHAT
-    assert p.payload.get("reason") == "unsupported_query"
+    assert p.intent == Intent.QUERY
+    assert p.payload["slot"] == "user.location"
 
 
 def test_italian_chitchat_not_plant():

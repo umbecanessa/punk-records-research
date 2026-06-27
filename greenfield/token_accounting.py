@@ -98,4 +98,13 @@ def plant_ack_text(slot: str, value: str) -> str:
         return f"Got it — code {value} stored."
     if slot.startswith("fact.item"):
         return f"Got it — item {value} stored."
+    if slot == "user.location":
+        return f"Got it — you're living in {value}."
+    if slot == "user.city":
+        return f"Got it — you're from {value}."
+    if slot == "user.home":
+        return f"Got it — your home is {value}."
+    if slot.startswith("user."):
+        label = slot.split(".", 1)[-1].replace("_", " ")
+        return f"Got it — {label} is {value}."
     return f"Got it — {slot} = {value}."

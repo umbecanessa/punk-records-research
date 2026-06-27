@@ -10,6 +10,7 @@ from greenfield.kernel import Kernel
 from greenfield.parser.template_parser import ParsedUtterance, parse_utterance
 from greenfield.runner import load_policy
 from greenfield.train.checkpoint_util import load_encoder_model
+from greenfield.memory.dynamic_plant import parse_dynamic_utterance
 from greenfield.parser.value_span import (
     detect_plant_slot,
     extract_plant_value,
@@ -101,6 +102,14 @@ class LearnedEventParser:
         template = parse_template_utterance(norm)
         if template is not None:
             return template
+
+        dynamic = parse_dynamic_utterance(norm)
+        if dynamic is not None:
+            return dynamic
+
+        unsupported = parse_unsupported_question(norm)
+        if unsupported is not None:
+            return unsupported
 
         st = stage or self.stage
         value_ids: list[int] = []

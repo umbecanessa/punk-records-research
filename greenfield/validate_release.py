@@ -427,11 +427,19 @@ def gate_open_phrasing(*, size: int = 800, min_acc: float = 0.92) -> GateResult:
 
 def gate_chat_v1(*, min_ratio: float = 0.35) -> GateResult:
     name = "chat_v1"
-    e9a = ROOT / "greenfield/checkpoints/encoder_e9a_best.pt"
-    e9b = ROOT / "greenfield/checkpoints/renderer_e9b_best.pt"
-    if not e9a.is_file() or not e9b.is_file():
-        return GateResult(name, True, "pending (E9a + E9b checkpoints)")
-    from greenfield.chat_v1 import default_chat_script, load_chat_v1_stack, run_nl_chat_session
+    e6 = ROOT / "greenfield/checkpoints/encoder_e6_best.pt"
+    from greenfield.chat_v1 import (
+        default_chat_script,
+        load_chat_v1_stack,
+        resolve_parser_checkpoint,
+        resolve_renderer_checkpoint,
+        run_nl_chat_session,
+    )
+
+    parser = resolve_parser_checkpoint(ROOT)
+    renderer = resolve_renderer_checkpoint(ROOT)
+    if not e6.is_file() or not parser.is_file() or not renderer.is_file():
+        return GateResult(name, True, "pending (E6 + parser + renderer checkpoints)")
 
     stack = load_chat_v1_stack(root=ROOT, device=torch.device("cpu"))
     _, _, metrics, err = run_nl_chat_session(default_chat_script(), stack=stack, token_curve=True)
@@ -459,20 +467,73 @@ def gate_e9b_renderer(*, min_exact: float = 0.99) -> GateResult:
     if not ckpt.is_file():
         return GateResult(name, True, "pending (train with train_renderer_e9b)")
     from greenfield.renderer.dataset import RenderDataset
-    from greenfield.renderer.transformer_renderer import TransformerRendererModel
+    from greenfield.renderer.transformer_renderer import load_transformer_renderer
     from greenfield.train.train_renderer_e9b import eval_epoch
     from torch.utils.data import DataLoader
 
     device = torch.device("cpu")
     loaded = torch.load(ckpt, map_location=device, weights_only=False)
-    model = TransformerRendererModel()
-    model.load_state_dict(loaded["model"])
+    model = load_transformer_renderer(ckpt, device)
     ds = RenderDataset(size=1000, seed=42)
     loader = DataLoader(ds, batch_size=64, shuffle=False)
     _, exact = eval_epoch(model, loader, device)
     params = loaded.get("params", "?")
     ok = exact >= min_exact
     return GateResult(name, ok, f"val_exact={exact:.3f} params={params}")
+
+
+def gate_e11a_open(*, size: int = 1200, min_acc: float = 0.97) -> GateResult:
+    name = "e11a_open"
+    ckpt = ROOT / "greenfield/checkpoints/encoder_e11a_best.pt"
+    if not ckpt.is_file():
+        return GateResult(name, True, "pending (train with train_encoder_e11a)")
+    from greenfield.eval_nl_messy import eval_messy
+    from greenfield.eval_open_phrasing import eval_open_phrasing
+    from greenfield.nl_gateway import LearnedEventParser
+
+    parser = LearnedEventParser.from_checkpoint(ckpt, device=torch.device("cpu"))
+    open_m = eval_open_phrasing(parser, size=size, seed=8080)
+    messy_m = eval_messy(parser, size=800, seed=4242)
+    ok = (
+        open_m["intent_acc"] >= min_acc
+        and open_m["slot_acc"] >= min_acc - 0.02
+        and messy_m["intent_acc"] >= min_acc
+    )
+    detail = (
+        f"open intent={open_m['intent_acc']:.3f} slot={open_m['slot_acc']:.3f} "
+        f"messy intent={messy_m['intent_acc']:.3f} n={open_m['samples']}"
+    )
+    return GateResult(name, ok, detail)
+
+
+def gate_e11b_renderer(*, min_exact: float = 0.98) -> GateResult:
+    name = "e11b_renderer"
+    ckpt = ROOT / "greenfield/checkpoints/renderer_e11b_best.pt"
+    if not ckpt.is_file():
+        return GateResult(name, True, "pending (train with train_renderer_e11b)")
+    from greenfield.renderer.dataset import ParaphraseRenderDataset
+    from greenfield.renderer.transformer_renderer import load_transformer_renderer
+    from greenfield.train.train_renderer_e9b import eval_epoch
+    from torch.utils.data import DataLoader
+
+    device = torch.device("cpu")
+    loaded = torch.load(ckpt, map_location=device, weights_only=False)
+    model = load_transformer_renderer(ckpt, device)
+    ds = ParaphraseRenderDataset(size=2000, seed=42)
+    loader = DataLoader(ds, batch_size=64, shuffle=False)
+    _, exact = eval_epoch(model, loader, device)
+    params = loaded.get("params", "?")
+    ok = exact >= min_exact
+    return GateResult(name, ok, f"paraphrase_exact={exact:.3f} params={params}")
+
+
+def gate_e12_dynamic(*, min_acc: float = 1.0) -> GateResult:
+    name = "e12_dynamic"
+    from greenfield.eval_e12_dynamic import eval_dynamic_session
+
+    m = eval_dynamic_session()
+    ok = m["accuracy"] >= min_acc
+    return GateResult(name, ok, f"session={m['passed']}/{m['total']} acc={m['accuracy']:.2f}")
 
 
 def run_all(*, nl_size: int = 2000, stack_episodes: int = 15, min_acc: float = 0.99) -> int:
@@ -491,6 +552,9 @@ def run_all(*, nl_size: int = 2000, stack_episodes: int = 15, min_acc: float = 0
         gate_e9b_renderer(),
         gate_open_phrasing(),
         gate_chat_v1(),
+        gate_e11a_open(),
+        gate_e11b_renderer(),
+        gate_e12_dynamic(),
     ]
     failed = 0
     print("=== Punk Records release validation ===")

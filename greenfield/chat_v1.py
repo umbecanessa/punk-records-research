@@ -167,7 +167,7 @@ def _reply_for_event(event, metrics: dict, state: MachineState | None = None) ->
         return "Stored."
     if event.intent == Intent.CHITCHAT:
         if event.payload.get("reason") == "unsupported_query":
-            return "I only remember name, code, and item in this demo."
+            return "I don't have that in memory yet — try name, code, item, or location."
         return "OK."
     return ""
 
@@ -205,9 +205,11 @@ def load_chat_v1_stack(
     ren_path = Path(renderer_checkpoint) if renderer_checkpoint else resolve_renderer_checkpoint(root)
     if not ren_path.is_absolute():
         ren_path = root / ren_path
-    pol_path = Path(policy) if policy and Path(policy).is_absolute() else (
-        Path(policy) if policy else deploy_policy_path()
-    )
+    if policy is not None and Path(policy).is_file():
+        pol_path = Path(policy) if Path(policy).is_absolute() else root / policy
+    else:
+        dynamic = root / "greenfield/deploy/policy.dynamic.json"
+        pol_path = dynamic if dynamic.is_file() else deploy_policy_path()
     if not pol_path.is_file():
         pol_path = root / "greenfield/deploy/policy.v0.json"
 

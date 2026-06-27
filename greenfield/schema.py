@@ -9,11 +9,12 @@ from typing import Any
 from greenfield.types import KernelRevert, OpCode, Storage
 
 FACT_PREFIX = "fact."
+USER_PREFIX = "user."
 TOOL_PREFIX = "tool."
 
 
 def slot_type(key: str) -> str:
-    if key.startswith(FACT_PREFIX):
+    if key.startswith(FACT_PREFIX) or key.startswith(USER_PREFIX):
         return "string"
     if key == "goal":
         return "goal"

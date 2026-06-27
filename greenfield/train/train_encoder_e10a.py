@@ -16,6 +16,7 @@ from greenfield.eval_open_phrasing import eval_open_phrasing
 from greenfield.log_util import configure_unbuffered, log
 from greenfield.nl_gateway import LearnedEventParser
 from greenfield.train.dataset_open_nl import OpenNlDataset
+from greenfield.train.model_presets import NL_E10A
 from greenfield.train.nl_parser_model import NlParserModel
 from greenfield.train.nl_transformer import count_parameters
 from greenfield.train.train_encoder import resolve_device
@@ -109,6 +110,8 @@ def main() -> None:
             "model": model.state_dict(),
             "parser": "nl_v2",
             "experiment": "e10a_open",
+            "preset": NL_E10A.name,
+            "model_config": NL_E10A.as_dict(),
             "utterance_len": 96,
             "params": params,
             "epoch": epoch,

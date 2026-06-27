@@ -295,10 +295,6 @@ def parse_template_utterance(text: str) -> ParsedUtterance | None:
         if lower in templates:
             return ParsedUtterance(Intent.QUERY, {"slot": slot}, "template_query")
 
-    unsupported = parse_unsupported_question(t)
-    if unsupported is not None:
-        return unsupported
-
     slot = detect_plant_slot(t)
     if slot:
         val = extract_plant_value(t, slot)

@@ -107,5 +107,13 @@ class TransformerRendererModel(nn.Module):
         return decode_text(ids)
 
 
+def load_transformer_renderer(path, device: torch.device) -> TransformerRendererModel:
+    ckpt = torch.load(path, map_location=device, weights_only=False)
+    cfg = dict(ckpt.get("model_config") or {})
+    model = TransformerRendererModel(**cfg)
+    model.load_state_dict(ckpt["model"])
+    return model.to(device).eval()
+
+
 def count_parameters(module: nn.Module) -> int:
     return sum(p.numel() for p in module.parameters() if p.requires_grad)

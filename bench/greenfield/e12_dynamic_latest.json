@@ -1,0 +1,43 @@
+{
+  "passed": 6,
+  "total": 6,
+  "accuracy": 1.0,
+  "rows": [
+    {
+      "user": "hi there",
+      "intent": "chitchat",
+      "reply": "OK.",
+      "pass": true
+    },
+    {
+      "user": "my name is Umberto",
+      "intent": "plant",
+      "reply": "Got it \u2014 I'll remember your name is Umberto.",
+      "pass": "Umberto"
+    },
+    {
+      "user": "I'm living in Amsterdam",
+      "intent": "plant",
+      "reply": "Got it \u2014 you're living in Amsterdam.",
+      "pass": "Amsterdam"
+    },
+    {
+      "user": "oggi piove brutta giornata",
+      "intent": "chitchat",
+      "reply": "OK.",
+      "pass": true
+    },
+    {
+      "user": "where do I live ?",
+      "intent": "query",
+      "reply": "You live in Amsterdam.",
+      "pass": true
+    },
+    {
+      "user": "whats my name ?",
+      "intent": "query",
+      "reply": "My name is Umberto.",
+      "pass": true
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-"""Regression: Space live-chat confusion cases."""
+"""Regression: Space live-chat confusion cases + E12 dynamic keys."""
 
 from __future__ import annotations
 
@@ -15,15 +15,15 @@ def session():
 
 def test_space_transcript(session):
     turns = [
-        ("hi there", "OK.", "CHITCHAT"),
-        ("my name is Umberto", "Umberto", "PLANT"),
-        ("I'm living in Amsterdam", "OK.", "CHITCHAT"),
-        ("oggi piove brutta giornata", "OK.", "CHITCHAT"),
-        ("where do I live ?", "only remember", "CHITCHAT"),
-        ("whats my name ?", "Umberto", "QUERY"),
+        ("hi there", "OK.", "chitchat"),
+        ("my name is Umberto", "Umberto", "plant"),
+        ("I'm living in Amsterdam", "Amsterdam", "plant"),
+        ("oggi piove brutta giornata", "OK.", "chitchat"),
+        ("where do I live ?", "Amsterdam", "query"),
+        ("whats my name ?", "Umberto", "query"),
     ]
     for user, expect_substr, intent in turns:
         session, reply, err = run_chat_turn(session, user)
         assert not err, err
         assert expect_substr.lower() in reply.lower(), (user, reply)
-        assert session.metrics["turns"][-1]["intent"].upper() == intent
+        assert session.metrics["turns"][-1]["intent"] == intent

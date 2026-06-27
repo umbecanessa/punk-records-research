@@ -88,13 +88,19 @@ class LearnedEncoder:
         return False
 
     def _slot_key(self, event: EpisodeEvent, slot_id: int | None) -> str:
+        explicit = event.slot_key()
+        if explicit and explicit.startswith("user."):
+            return explicit
         if slot_id is not None and self.use_learned_args:
             key = ID_TO_SLOT.get(slot_id, "__none__")
             if key != "__none__":
                 return key
-        return event.slot_key() or "fact.name"
+        return explicit or "fact.name"
 
     def _value_str(self, event: EpisodeEvent, x: torch.Tensor | None) -> str:
+        key = event.slot_key() or ""
+        if key.startswith("user.") and event.slot_value() is not None:
+            return str(event.slot_value())
         if self.use_learned_values and x is not None:
             # Values come from OBS percept encoded in features — not event.slot_value().
             return decode_value_from_features(x)
