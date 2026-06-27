@@ -25,6 +25,7 @@ try:
         run_nl_quest_demo,
         run_stage_demo,
     )
+    from gradio_compat import create_chatbot
 except ImportError:
     from space.demo_util import (
         run_chat_v1_demo,
@@ -37,6 +38,7 @@ except ImportError:
         run_nl_quest_demo,
         run_stage_demo,
     )
+    from space.gradio_compat import create_chatbot
 
 DESCRIPTION = """
 # Punk Records Research — Agent Kernel Demo
@@ -157,7 +159,7 @@ def build_app() -> gr.Blocks:
                 "Talk turn-by-turn — plants stick in **kernel STORAGE** across messages. "
                 "Try open phrasing: *By the way my name is Ada* → later *what name did I give you?*"
             )
-            chatbot = gr.Chatbot(label="Chat", type="messages")
+            chatbot = create_chatbot(label="Chat")
             chat_msg = gr.Textbox(label="Message", placeholder="Type and press Enter...")
             chat_session = gr.State(None)
             with gr.Row():

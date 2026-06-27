@@ -34,6 +34,7 @@ def build_staging() -> Path:
 
     shutil.copy2(REPO_ROOT / "space" / "app.py", STAGING / "app.py")
     shutil.copy2(REPO_ROOT / "space" / "demo_util.py", STAGING / "demo_util.py")
+    shutil.copy2(REPO_ROOT / "space" / "gradio_compat.py", STAGING / "gradio_compat.py")
     shutil.copy2(REPO_ROOT / "space" / "requirements.txt", STAGING / "requirements.txt")
 
     dest_gf = STAGING / "greenfield"

@@ -36,6 +36,11 @@ from greenfield.nl_turn import (
 )
 from greenfield.types import EpisodeEvent, Intent, KernelRevert, MachineState, OpCode
 
+try:
+    from gradio_compat import append_chat_turn
+except ImportError:
+    from space.gradio_compat import append_chat_turn
+
 HF_MODEL_REPO = "wasnaga/punk-records-research-kernel-v0.1"
 CACHE = Path(__file__).resolve().parent / ".cache"
 
@@ -85,10 +90,15 @@ def resolve_checkpoint(name: str) -> Path:
 
 
 def load_demo_chat_stack():
-    """E10 chat stack — prefers E10a parser + E9b renderer from Hub or local."""
+    """E10 chat stack — prefers E11a/E11b, then E10a/E9b from Hub or local."""
     root = repo_root()
     parser_path = None
-    for parser_name in ("encoder_e10a_best.pt", "encoder_e9a_best.pt", "encoder_e7_best.pt"):
+    for parser_name in (
+        "encoder_e11a_best.pt",
+        "encoder_e10a_best.pt",
+        "encoder_e9a_best.pt",
+        "encoder_e7_best.pt",
+    ):
         try:
             parser_path = resolve_checkpoint(parser_name)
             break
@@ -96,11 +106,20 @@ def load_demo_chat_stack():
             continue
     if parser_path is None:
         raise FileNotFoundError("no NL parser checkpoint on Hub or locally")
+    renderer_path = None
+    for ren_name in ("renderer_e11b_best.pt", "renderer_e9b_best.pt"):
+        try:
+            renderer_path = resolve_checkpoint(ren_name)
+            break
+        except Exception:
+            continue
+    if renderer_path is None:
+        raise FileNotFoundError("no renderer checkpoint on Hub or locally")
     return load_chat_v1_stack(
         root=root,
         device=torch.device("cpu"),
         e6=resolve_checkpoint("encoder_e6_best.pt"),
-        e9b=resolve_checkpoint("renderer_e9b_best.pt"),
+        renderer_checkpoint=renderer_path,
         parser_checkpoint=parser_path,
     )
 
@@ -557,14 +576,6 @@ def _empty_chat_session() -> ChatSessionState | None:
         return None
 
 
-def _chat_messages(user: str, assistant: str) -> list[dict[str, str]]:
-    """Gradio 5 Chatbot (type='messages') expects role/content dicts."""
-    return [
-        {"role": "user", "content": user},
-        {"role": "assistant", "content": assistant},
-    ]
-
-
 def run_live_chat(message: str, history: list, session: ChatSessionState | None):
     """Gradio Chatbot — one message at a time; kernel memory persists in session."""
     if not str(message).strip():
@@ -574,9 +585,9 @@ def run_live_chat(message: str, history: list, session: ChatSessionState | None)
             session = init_chat_session(load_demo_chat_stack())
         session, reply, err = run_chat_turn(session, message)
         if err:
-            history = history + _chat_messages(message, f"*(error)* {err}")
+            history = append_chat_turn(history, message, f"*(error)* {err}")
             return history, session, "", format_log(session.state)
-        history = history + _chat_messages(message, reply)
+        history = append_chat_turn(history, message, reply)
         tok = session.ledger.to_dict()
         stats = (
             f"queries **{session.metrics['query_hits']}/{session.metrics['queries']}** · "
@@ -586,10 +597,10 @@ def run_live_chat(message: str, history: list, session: ChatSessionState | None)
         )
         return history, session, stats, format_log(session.state)
     except FileNotFoundError as exc:
-        history = history + _chat_messages(message, f"*(missing checkpoints)* {exc}")
+        history = append_chat_turn(history, message, f"*(missing checkpoints)* {exc}")
         return history, session, "", ""
     except Exception as exc:
-        history = history + _chat_messages(message, f"*(error)* {exc}")
+        history = append_chat_turn(history, message, f"*(error)* {exc}")
         return history, session, "", str(exc)
 
 
