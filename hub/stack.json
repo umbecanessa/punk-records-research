@@ -8,6 +8,6 @@
   "use_learned_args": true,
   "use_learned_values": true,
   "curriculum_stages": "A,B,C,D,E,F",
-  "code_repo": "https://github.com/YOUR_GH_USER/punk-records-research",
+  "code_repo": "https://github.com/umbecanessa/punk-records-research",
   "notes": "Hub bundle — paths relative to this model repo root."
 }

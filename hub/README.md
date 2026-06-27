@@ -18,7 +18,7 @@ datasets:
 
 **Research artifact — not a chat LLM.**
 
-[*Punk Records*](https://github.com/YOUR_GH_USER/punk-records-research) — lawful agent memory as kernel state transitions (One Piece punk records metaphor: immutable logs that outlive any speaker).
+[*Punk Records*](https://github.com/umbecanessa/punk-records-research) — lawful agent memory as kernel state transitions (One Piece punk records metaphor: immutable logs that outlive any speaker).
 
 | Layer | Artifact | Role |
 |-------|----------|------|
@@ -26,7 +26,7 @@ datasets:
 | Encoder **E6** | `encoder_e6_best.pt` | Learned opcodes + slot keys + values |
 | Renderer **E3** | `renderer_e3_best.pt` | Untrusted text from storage |
 
-**Source code:** [github.com/YOUR_GH_USER/punk-records-research](https://github.com/YOUR_GH_USER/punk-records-research)
+**Source code:** [github.com/umbecanessa/punk-records-research](https://github.com/umbecanessa/punk-records-research)
 
 ---
 
@@ -47,7 +47,7 @@ Frozen reports in `eval/`. Reproduce with the GitHub repo + these weights.
 
 ```bash
 pip install -U "huggingface_hub[cli]"
-huggingface-cli download YOUR_HF_USER/punk-records-research-kernel-v0.1 --local-dir ./kernel-v0.1
+huggingface-cli download umbecanessa/punk-records-research-kernel-v0.1 --local-dir ./kernel-v0.1
 ```
 
 | File | Description |
@@ -96,7 +96,7 @@ Values at inference come from **OBS percept bytes in features**, not chat payloa
 @software{punk_records_research_kernel_v01,
   title  = {Punk Records Research — Agent Kernel v0.1},
   year   = {2026},
-  url    = {https://huggingface.co/YOUR_HF_USER/punk-records-research-kernel-v0.1},
+  url    = {https://huggingface.co/umbecanessa/punk-records-research-kernel-v0.1},
   note   = {8-opcode session state machine; structured-event training.}
 }
 ```

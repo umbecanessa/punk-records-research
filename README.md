@@ -13,7 +13,7 @@ The reference kernel implementation lives in the `greenfield/` Python package (l
 | **Encoder E6** | Learned opcodes, slot keys, values (~120k params) |
 | **Renderer E3** | Untrusted text from storage (~1.3M params) |
 
-**Weights:** [Hugging Face — `punk-records-research-kernel-v0.1`](https://huggingface.co/YOUR_HF_USER/punk-records-research-kernel-v0.1)  
+**Weights:** [Hugging Face — `punk-records-research-kernel-v0.1`](https://huggingface.co/umbecanessa/punk-records-research-kernel-v0.1)  
 Training labels come from **world ground truth**, not chat transcripts.
 
 ### Results (v0.1)
@@ -31,7 +31,7 @@ See `hub/README.md` for the Hugging Face model card and `docs/KERNEL.md` for the
 ## Install
 
 ```bash
-git clone https://github.com/YOUR_GH_USER/punk-records-research.git
+git clone https://github.com/umbecanessa/punk-records-research.git
 cd punk-records-research
 pip install -e ".[dev]"
 ```
@@ -39,7 +39,7 @@ pip install -e ".[dev]"
 Download release weights:
 
 ```bash
-huggingface-cli download YOUR_HF_USER/punk-records-research-kernel-v0.1 \
+huggingface-cli download umbecanessa/punk-records-research-kernel-v0.1 \
   --local-dir greenfield/checkpoints/hf
 ```
 
@@ -113,7 +113,7 @@ Apache-2.0 — see [LICENSE](LICENSE).
 @software{punk_records_research_kernel_v01,
   title  = {Punk Records Research — Agent Kernel v0.1},
   year   = {2026},
-  url    = {https://github.com/YOUR_GH_USER/punk-records-research},
+  url    = {https://github.com/umbecanessa/punk-records-research},
   note   = {8-opcode session state machine; structured-event training; storage fidelity metrics.}
 }
 ```

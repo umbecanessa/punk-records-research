@@ -112,7 +112,7 @@ def main() -> None:
     parser.add_argument(
         "--repo-id",
         default="",
-        help="Hub model repo, e.g. YOUR_HF_USER/punk-records-research-kernel-v0.1",
+        help="Hub model repo, e.g. umbecanessa/punk-records-research-kernel-v0.1",
     )
     parser.add_argument("--private", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -133,7 +133,7 @@ def main() -> None:
 
     repo_id = args.repo_id.strip()
     if not repo_id:
-        fail("pass --repo-id YOUR_HF_USER/punk-records-research-kernel-v0.1")
+        fail("pass --repo-id umbecanessa/punk-records-research-kernel-v0.1")
 
     upload(repo_id, private=args.private, commit_message=args.message)
 
