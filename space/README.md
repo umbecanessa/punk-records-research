@@ -4,7 +4,7 @@ emoji: 📜
 colorFrom: indigo
 colorTo: blue
 sdk: gradio
-app_file: space/app.py
+app_file: app.py
 pinned: false
 license: apache-2.0
 short_description: 8-opcode agent kernel — memory as state, not chat

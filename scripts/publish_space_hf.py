@@ -26,8 +26,10 @@ def build_staging() -> Path:
         shutil.rmtree(STAGING)
     STAGING.mkdir(parents=True)
 
-    # Space frontmatter README
-    readme = (REPO_ROOT / "space" / "README.md").read_text(encoding="utf-8")
+    # Space README — app.py lives at repo root when published
+    readme_src = REPO_ROOT / "space" / "README.md"
+    readme = readme_src.read_text(encoding="utf-8")
+    readme = readme.replace("app_file: space/app.py", "app_file: app.py")
     (STAGING / "README.md").write_text(readme, encoding="utf-8")
 
     shutil.copy2(REPO_ROOT / "space" / "app.py", STAGING / "app.py")

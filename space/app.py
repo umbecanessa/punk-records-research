@@ -7,7 +7,9 @@ from pathlib import Path
 
 import gradio as gr
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent
+if not (ROOT / "greenfield").is_dir() and (ROOT.parent / "greenfield").is_dir():
+    ROOT = ROOT.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
