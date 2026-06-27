@@ -1,0 +1,51 @@
+{
+  "time": "2026-06-27T16:20:04.461889+00:00",
+  "seed": 0,
+  "oracle_abce": {
+    "A": {
+      "episodes": 10,
+      "mean_query_accuracy": 1.0,
+      "mean_revert_rate": 0.0,
+      "mean_render_fidelity": null,
+      "mean_gas": 119.0
+    },
+    "B": {
+      "episodes": 10,
+      "mean_query_accuracy": 1.0,
+      "mean_revert_rate": 0.0,
+      "mean_render_fidelity": null,
+      "mean_gas": 147.8
+    },
+    "C": {
+      "episodes": 10,
+      "mean_query_accuracy": 1.0,
+      "mean_revert_rate": 0.0,
+      "mean_render_fidelity": null,
+      "mean_gas": 169.0
+    },
+    "D": {
+      "episodes": 10,
+      "mean_query_accuracy": 1.0,
+      "mean_revert_rate": 0.1022,
+      "mean_render_fidelity": null,
+      "mean_gas": 199.3
+    },
+    "E": {
+      "episodes": 10,
+      "mean_query_accuracy": 1.0,
+      "mean_revert_rate": 0.0,
+      "mean_render_fidelity": null,
+      "mean_gas": 181.6
+    }
+  },
+  "oracle_overflow_f": {
+    "episodes": 10,
+    "mean_query_accuracy": 1.0,
+    "mean_revert_rate": 0.0,
+    "mean_render_fidelity": null,
+    "mean_gas": 595.0,
+    "total_cold_hits": 30,
+    "total_overflow_evictions": 30
+  },
+  "episodes": 10
+}

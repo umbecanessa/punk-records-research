@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "punk-records-research"
+version = "0.1.0"
+description = "Punk Records Research — lawful agent kernel (8-opcode state machine)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "torch>=2.1.0",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
+]
+hub = [
+    "huggingface_hub>=0.23.0",
+]
+
+[project.scripts]
+pr-kernel = "greenfield.cli:main"
+pr-kernel-eval = "greenfield.eval_stack:main"
+pr-kernel-train = "greenfield.train.train_encoder:main"
+pr-kernel-train-e6 = "greenfield.train.train_encoder_e6:main"
+pr-kernel-bench = "greenfield.bench:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["greenfield*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

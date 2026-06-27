@@ -1,0 +1,71 @@
+{
+  "time": "2026-06-27T17:06:05.797468+00:00",
+  "experiment": "e6_v2",
+  "checkpoint": "greenfield\\checkpoints\\encoder_e6_best.pt",
+  "best_mean_reward": 0.9913666666666666,
+  "final_eval": {
+    "mean_reward": 0.990625,
+    "stages": {
+      "A": {
+        "episodes": 30,
+        "mean_query_accuracy": 1.0,
+        "mean_revert_rate": 0.0,
+        "mean_render_fidelity": null,
+        "mean_gas": 119.0,
+        "reward": 1.0,
+        "cold_hits": 0,
+        "overflow_evictions": 0
+      },
+      "B": {
+        "episodes": 30,
+        "mean_query_accuracy": 1.0,
+        "mean_revert_rate": 0.0,
+        "mean_render_fidelity": null,
+        "mean_gas": 142.6,
+        "reward": 1.0,
+        "cold_hits": 0,
+        "overflow_evictions": 0
+      },
+      "C": {
+        "episodes": 30,
+        "mean_query_accuracy": 1.0,
+        "mean_revert_rate": 0.0,
+        "mean_render_fidelity": null,
+        "mean_gas": 169.0,
+        "reward": 1.0,
+        "cold_hits": 0,
+        "overflow_evictions": 0
+      },
+      "D": {
+        "episodes": 30,
+        "mean_query_accuracy": 1.0,
+        "mean_revert_rate": 0.1125,
+        "mean_render_fidelity": null,
+        "mean_gas": 192.4,
+        "reward": 0.9437,
+        "cold_hits": 0,
+        "overflow_evictions": 0
+      },
+      "E": {
+        "episodes": 30,
+        "mean_query_accuracy": 1.0,
+        "mean_revert_rate": 0.0,
+        "mean_render_fidelity": null,
+        "mean_gas": 179.6,
+        "reward": 1.0,
+        "cold_hits": 0,
+        "overflow_evictions": 0
+      },
+      "F": {
+        "episodes": 30,
+        "mean_query_accuracy": 1.0,
+        "mean_revert_rate": 0.0,
+        "mean_render_fidelity": null,
+        "mean_gas": 595.0,
+        "reward": 1.0,
+        "cold_hits": 90,
+        "overflow_evictions": 90
+      }
+    }
+  }
+}

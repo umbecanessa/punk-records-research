@@ -1,0 +1,33 @@
+{
+  "time": "2026-06-27T16:11:24.035426+00:00",
+  "device": "cuda",
+  "experiment": "e3",
+  "params": 1309312,
+  "best_val_exact": 1.0,
+  "checkpoint": "greenfield\\checkpoints\\renderer_e3_best.pt",
+  "end_to_end": {
+    "mean_render_fidelity": 1.0,
+    "stages": {
+      "A": {
+        "render_fidelity": 1.0,
+        "n": 15
+      },
+      "B": {
+        "render_fidelity": 1.0,
+        "n": 15
+      },
+      "C": {
+        "render_fidelity": 1.0,
+        "n": 15
+      },
+      "D": {
+        "render_fidelity": 1.0,
+        "n": 15
+      },
+      "E": {
+        "render_fidelity": 1.0,
+        "n": 15
+      }
+    }
+  }
+}

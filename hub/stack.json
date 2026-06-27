@@ -1,0 +1,13 @@
+{
+  "version": "0.1.0",
+  "name": "punk-records-research-kernel-v0.1",
+  "encoder": "encoder_e6_best.pt",
+  "renderer": "renderer_e3_best.pt",
+  "policy": "policies/policy.v0.json",
+  "overflow_policy": "policies/policy.overflow.json",
+  "use_learned_args": true,
+  "use_learned_values": true,
+  "curriculum_stages": "A,B,C,D,E,F",
+  "code_repo": "https://github.com/YOUR_GH_USER/punk-records-research",
+  "notes": "Hub bundle — paths relative to this model repo root."
+}
