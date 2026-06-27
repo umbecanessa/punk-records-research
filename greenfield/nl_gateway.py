@@ -15,7 +15,9 @@ from greenfield.parser.value_span import (
     extract_plant_value,
     normalize_for_match,
     parse_extended_utterance,
+    parse_relaxed_query,
     parse_template_utterance,
+    parse_unsupported_question,
 )
 from greenfield.train.features import FEATURE_DIM, E7_ID_TO_INTENT, E7_ID_TO_SLOT, featurize_utterance
 from greenfield.train.model import EventEncoderModel
@@ -58,7 +60,7 @@ class LearnedEventParser:
     ) -> LearnedEventParser:
         device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
         ckpt = torch.load(Path(path), map_location=device, weights_only=False)
-        if ckpt.get("parser") == "nl_v2" or ckpt.get("experiment") == "e10a_open":
+        if ckpt.get("parser") == "nl_v2" or ckpt.get("experiment") in ("e10a_open", "e11a_open_50m"):
             nl_model = load_nl_parser(path, device)
             return cls(nl_model=nl_model, device=device, stage=stage)
         legacy = load_encoder_model(
@@ -116,18 +118,33 @@ class LearnedEventParser:
         if intent not in (Intent.PLANT, Intent.QUERY):
             return None
 
-        slot_key = slot if slot != "__none__" else "fact.name"
-        if intent == Intent.PLANT:
-            detected = detect_plant_slot(norm)
-            if detected:
-                slot_key = detected
-        payload: dict = {"slot": slot_key}
-        if intent == Intent.PLANT:
-            span_val = extract_plant_value(norm, slot_key)
-            value = span_val or decode_value(value_ids)
-            if not value:
-                return None
-            payload["value"] = value
+        if intent == Intent.QUERY:
+            relaxed = parse_relaxed_query(norm)
+            if relaxed is not None:
+                return relaxed
+            unsupported = parse_unsupported_question(norm)
+            if unsupported is not None:
+                return unsupported
+            slot_key = slot if slot != "__none__" else "fact.name"
+            if slot_key not in ("fact.name", "fact.code", "fact.item0") and not str(slot_key).startswith(
+                "fact.item"
+            ):
+                return ParsedUtterance(
+                    Intent.CHITCHAT,
+                    {"reason": "unsupported_query"},
+                    "unsupported_query",
+                )
+            return ParsedUtterance(intent, {"slot": slot_key}, "learned_v2" if self.nl_model else "learned")
+
+        # PLANT — require an explicit template prefix (never guess from last word).
+        detected = detect_plant_slot(norm)
+        if not detected:
+            return ParsedUtterance(Intent.CHITCHAT, {}, "plant_guard")
+        slot_key = detected
+        span_val = extract_plant_value(norm, slot_key)
+        if not span_val:
+            return ParsedUtterance(Intent.CHITCHAT, {}, "plant_guard")
+        payload: dict = {"slot": slot_key, "value": span_val}
         return ParsedUtterance(intent, payload, "learned_v2" if self.nl_model else "learned")
 
 
