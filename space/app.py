@@ -14,9 +14,29 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 try:
-    from demo_util import run_interactive, run_nl_episode, run_stage_demo
+    from demo_util import (
+        run_chat_v1_demo,
+        run_interactive,
+        run_live_chat,
+        reset_live_chat,
+        run_nl_episode,
+        run_nl_long_session_demo,
+        run_nl_overflow_demo,
+        run_nl_quest_demo,
+        run_stage_demo,
+    )
 except ImportError:
-    from space.demo_util import run_interactive, run_nl_episode, run_stage_demo
+    from space.demo_util import (
+        run_chat_v1_demo,
+        run_interactive,
+        run_live_chat,
+        reset_live_chat,
+        run_nl_episode,
+        run_nl_long_session_demo,
+        run_nl_overflow_demo,
+        run_nl_quest_demo,
+        run_stage_demo,
+    )
 
 DESCRIPTION = """
 # Punk Records Research — Agent Kernel Demo
@@ -59,8 +79,11 @@ def build_app() -> gr.Blocks:
                 outputs=[summary_i, world_i, log_i, trace_i],
             )
 
-        with gr.Tab("Natural language (E7a)"):
-            gr.Markdown("Type English utterances → template parser → same kernel stack.")
+        with gr.Tab("Natural language (E7)"):
+            gr.Markdown(
+                "Type English → **OBS capture** → E7 parse → E6 opcode trace → kernel. "
+                "Each utterance is logged as OBS before PUT/GET."
+            )
             plant_t = gr.Textbox(label="Plant", value="Remember my name is Ada")
             query_t = gr.Textbox(label="Query", value="What's my name?")
             seed_n = gr.Number(value=0, precision=0, label="Seed")
@@ -73,6 +96,117 @@ def build_app() -> gr.Blocks:
                 fn=lambda p, q, s: run_nl_episode(str(p), str(q), int(s)),
                 inputs=[plant_t, query_t, seed_n],
                 outputs=[sum_n, world_n, log_n, trace_n],
+            )
+
+        with gr.Tab("Quest (Stage G + tokens)"):
+            gr.Markdown(
+                "Three NL plant/query pairs — name, code, multi-word item. "
+                "Shows **token savings** vs re-feeding full chat history each turn."
+            )
+            seed_q = gr.Number(value=0, precision=0, label="Seed")
+            run_q = gr.Button("Run quest", variant="primary")
+            sum_q = gr.Markdown()
+            ans_q = gr.Markdown()
+            log_q = gr.Textbox(label="Kernel log", lines=10)
+            trace_q = gr.Markdown()
+            run_q.click(
+                fn=lambda s: run_nl_quest_demo(int(s)),
+                inputs=[seed_q],
+                outputs=[sum_q, ans_q, log_q, trace_q],
+            )
+
+        with gr.Tab("Overflow (Stage F + cold + tokens)"):
+            gr.Markdown(
+                "Plant/query five indexed items via NL. Hot cap = **2** → evictions to **cold store**. "
+                "Queries still hit cold memory; token counter shows savings vs chat replay."
+            )
+            seed_o = gr.Number(value=0, precision=0, label="Seed")
+            run_o = gr.Button("Run overflow NL", variant="primary")
+            sum_o = gr.Markdown()
+            ans_o = gr.Markdown()
+            log_o = gr.Textbox(label="Kernel log", lines=12)
+            trace_o = gr.Markdown()
+            run_o.click(
+                fn=lambda s: run_nl_overflow_demo(int(s)),
+                inputs=[seed_o],
+                outputs=[sum_o, ans_o, log_o, trace_o],
+            )
+
+        with gr.Tab("Long session (E8 + token curve)"):
+            gr.Markdown(
+                "Run **10+ NL plant/query pairs** in one session. "
+                "Baseline grows like chat replay (O(n²)); kernel stays O(n). "
+                "Table shows cumulative savings after each query."
+            )
+            with gr.Row():
+                seed_l = gr.Number(value=0, precision=0, label="Seed")
+                pairs_l = gr.Slider(3, 20, value=10, step=1, label="Plant/query pairs")
+            run_l = gr.Button("Run long session", variant="primary")
+            sum_l = gr.Markdown()
+            storage_l = gr.Markdown(label="Hot storage")
+            log_l = gr.Textbox(label="Kernel log", lines=12)
+            trace_l = gr.Markdown()
+            run_l.click(
+                fn=lambda s, p: run_nl_long_session_demo(int(s), int(p)),
+                inputs=[seed_l, pairs_l],
+                outputs=[sum_l, storage_l, log_l, trace_l],
+            )
+
+        with gr.Tab("Live chat (E10.1 GPT path)"):
+            gr.Markdown(
+                "Talk turn-by-turn — plants stick in **kernel STORAGE** across messages. "
+                "Try open phrasing: *By the way my name is Ada* → later *what name did I give you?*"
+            )
+            chatbot = gr.Chatbot(label="Chat")
+            chat_msg = gr.Textbox(label="Message", placeholder="Type and press Enter...")
+            chat_session = gr.State(None)
+            with gr.Row():
+                send_c = gr.Button("Send", variant="primary")
+                reset_c = gr.Button("Reset session")
+            chat_stats = gr.Markdown()
+            chat_log = gr.Textbox(label="Kernel log", lines=8)
+            send_c.click(
+                fn=run_live_chat,
+                inputs=[chat_msg, chatbot, chat_session],
+                outputs=[chatbot, chat_session, chat_stats, chat_log],
+            ).then(lambda: "", outputs=[chat_msg])
+            chat_msg.submit(
+                fn=run_live_chat,
+                inputs=[chat_msg, chatbot, chat_session],
+                outputs=[chatbot, chat_session, chat_stats, chat_log],
+            ).then(lambda: "", outputs=[chat_msg])
+            reset_c.click(
+                fn=reset_live_chat,
+                outputs=[chatbot, chat_session, chat_stats, chat_log],
+            )
+
+        with gr.Tab("Chat v1 (E10)"):
+            gr.Markdown(
+                "Free-form multi-turn chat — **one message per line**. "
+                "Plants/queries hit kernel STORAGE; chitchat is OBS-only. "
+                "E9a transformer NL + E9b transformer renderer."
+            )
+            default_chat = "\n".join([
+                "Remember my name is Ada",
+                "hello there",
+                "my code is 4242",
+                "what is my name?",
+                "what is my code?",
+            ])
+            chat_in = gr.Textbox(
+                label="Messages (one per line)",
+                lines=8,
+                value=default_chat,
+            )
+            run_c = gr.Button("Run chat session", variant="primary")
+            sum_c = gr.Markdown()
+            storage_c = gr.Markdown()
+            log_c = gr.Textbox(label="Kernel log", lines=10)
+            trace_c = gr.Markdown()
+            run_c.click(
+                fn=run_chat_v1_demo,
+                inputs=[chat_in],
+                outputs=[sum_c, storage_c, log_c, trace_c],
             )
 
         with gr.Tab("Batch eval"):

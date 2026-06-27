@@ -11,6 +11,7 @@ from greenfield.learned_encoder import LearnedEncoder
 from greenfield.runner import load_policy, run_episode
 from greenfield.simulator import sample_world
 from greenfield.train.dataset import OpcodeDataset
+from greenfield.train.features import FEATURE_DIM
 from greenfield.train.model import EventEncoderModel
 from greenfield.types import Policy
 
@@ -19,7 +20,7 @@ def test_opcode_dataset_build():
     policy = Policy()
     ds = OpcodeDataset(size=100, seed=0, stages=[CurriculumStage.A], policy=policy)
     x, y = ds[0]
-    assert x.shape[0] == 21  # 9 structured fields + 12 percept value chars
+    assert x.shape[0] == FEATURE_DIM
     assert y.ndim == 0
 
 

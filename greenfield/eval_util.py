@@ -8,13 +8,15 @@ from greenfield.episodes import CurriculumStage, generate_script
 from greenfield.learned_encoder import LearnedEncoder
 from greenfield.renderer.core import Renderer
 from greenfield.runner import run_episode, summarize
-from greenfield.simulator import overflow_world, sample_world
+from greenfield.simulator import overflow_world, quest_world, sample_world
 from greenfield.types import Policy, World
 
 
 def world_for_stage(stage: CurriculumStage, ep_seed: int, *, num_facts: int = 5) -> World:
     if stage == CurriculumStage.F:
         return overflow_world(random.Random(ep_seed), num_facts=num_facts)
+    if stage == CurriculumStage.G:
+        return quest_world(random.Random(ep_seed))
     return sample_world(random.Random(ep_seed), num_facts=1 + (ep_seed % 2))
 
 

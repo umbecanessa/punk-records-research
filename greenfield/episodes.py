@@ -15,6 +15,7 @@ class CurriculumStage(str, Enum):
     D = "D"
     E = "E"
     F = "F"
+    G = "G"  # E7c — multi-type quest world (name + code + item)
 
 
 def _plant_event(t: int, key: str, value: str) -> EpisodeEvent:
@@ -144,6 +145,22 @@ def generate_script(
         for key, _ in facts:
             events.append(_query_event(t, key))
             t += 1
+        return events
+
+    if stage == CurriculumStage.G:
+        order = ["fact.name", "fact.code", "fact.item0"]
+        for key in order:
+            if key not in world.facts:
+                continue
+            events.append(_plant_event(t, key, str(world.facts[key])))
+            t += 1
+            if rng.random() < 0.35:
+                events.append(_filler_event(t))
+                t += 1
+        for key in order:
+            if key in world.facts:
+                events.append(_query_event(t, key))
+                t += 1
         return events
 
     # default B-like multi-fact

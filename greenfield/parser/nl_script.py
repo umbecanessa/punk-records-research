@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import random
 
+from pathlib import Path
+
 from greenfield.episodes import CurriculumStage, generate_script
-from greenfield.parser.template_parser import parse_utterance
+from greenfield.nl_gateway import default_parser_state, parse_nl
 from greenfield.simulator import sample_world
 from greenfield.types import EpisodeEvent, Intent
 
@@ -15,10 +17,12 @@ def script_from_nl(
     query_text: str,
     *,
     seed: int = 0,
+    parser_checkpoint: str | Path | None = None,
 ) -> tuple[list[EpisodeEvent], str]:
-    """Return (events, error). Uses parser for plant + query; filler from stage B."""
-    plant = parse_utterance(plant_text)
-    query = parse_utterance(query_text)
+    """Return (events, error). Uses learned E7 parser when checkpoint exists."""
+    state = default_parser_state()
+    plant = parse_nl(plant_text, state, checkpoint=parser_checkpoint)
+    query = parse_nl(query_text, state, checkpoint=parser_checkpoint)
     if plant is None:
         return [], f"could not parse plant: {plant_text!r}"
     if query is None:

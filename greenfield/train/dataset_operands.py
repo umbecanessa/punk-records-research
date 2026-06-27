@@ -10,7 +10,7 @@ from torch.utils.data import Dataset
 from greenfield.encoder import OracleEncoder
 from greenfield.episodes import CurriculumStage, generate_script
 from greenfield.kernel import Kernel
-from greenfield.simulator import bind_tools, default_tool_executor, overflow_world, sample_world
+from greenfield.simulator import bind_tools, default_tool_executor, overflow_world, quest_world, sample_world
 from greenfield.train.features import OP_TO_ID, SLOTS, slot_key_id, featurize
 from greenfield.train.value_codec import VALUE_CHARS, encode_value
 from greenfield.types import OpCode, Policy
@@ -60,6 +60,8 @@ class OperandDataset(Dataset):
             ep_seed = self.seed + i * 19
             if stage == CurriculumStage.F:
                 world = overflow_world(random.Random(ep_seed), num_facts=5)
+            elif stage == CurriculumStage.G:
+                world = quest_world(random.Random(ep_seed))
             else:
                 world = sample_world(random.Random(ep_seed), num_facts=1 + (i % 2))
             script = generate_script(world, stage=stage, rng=random.Random(ep_seed + 1))

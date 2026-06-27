@@ -1,0 +1,7 @@
+{
+  "time": "2026-06-27T19:30:04.226886+00:00",
+  "experiment": "e9a_nl_transformer",
+  "checkpoint": "greenfield\\checkpoints\\encoder_e9a_best.pt",
+  "nl_params": 621024,
+  "best_score": 9.0
+}

@@ -71,6 +71,11 @@ def main() -> None:
     parser.add_argument("--message", default="Punk Records Research kernel demo")
     args = parser.parse_args()
 
+    if not args.dry_run:
+        from release_gate import run_release_validation
+
+        run_release_validation(cwd=REPO_ROOT)
+
     staging = build_staging()
     n = len([p for p in staging.rglob("*") if p.is_file()])
     log(f"staged {n} files -> {staging}")

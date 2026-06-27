@@ -1,0 +1,7 @@
+{
+  "time": "2026-06-27T19:47:02.703232+00:00",
+  "experiment": "e10a_open",
+  "checkpoint": "greenfield\\checkpoints\\encoder_e10a_best.pt",
+  "params": 1841927,
+  "best_score": 3.979591836734694
+}

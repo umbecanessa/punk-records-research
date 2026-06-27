@@ -1,0 +1,115 @@
+{
+  "time": "2026-06-27T19:47:11.952703+00:00",
+  "seed": 0,
+  "user_turns": 7,
+  "queries": 3,
+  "query_hits": 3,
+  "reverts": 0,
+  "tokens": {
+    "baseline_input_tokens": 336,
+    "baseline_output_tokens": 39,
+    "baseline_total_tokens": 375,
+    "kernel_input_tokens": 106,
+    "kernel_output_tokens": 11,
+    "kernel_total_tokens": 117,
+    "tokens_saved": 258,
+    "input_tokens_saved": 230,
+    "savings_ratio": 0.688,
+    "turns": 7
+  },
+  "token_curve": [
+    {
+      "turn": 1,
+      "tokens_saved": 3,
+      "savings_ratio": 0.15,
+      "baseline_total": 20,
+      "kernel_total": 17
+    },
+    {
+      "turn": 2,
+      "tokens_saved": 16,
+      "savings_ratio": 0.3478,
+      "baseline_total": 46,
+      "kernel_total": 30
+    },
+    {
+      "turn": 3,
+      "tokens_saved": 41,
+      "savings_ratio": 0.4767,
+      "baseline_total": 86,
+      "kernel_total": 45
+    },
+    {
+      "turn": 4,
+      "tokens_saved": 73,
+      "savings_ratio": 0.529,
+      "baseline_total": 138,
+      "kernel_total": 65
+    },
+    {
+      "turn": 5,
+      "tokens_saved": 117,
+      "savings_ratio": 0.5764,
+      "baseline_total": 203,
+      "kernel_total": 86
+    },
+    {
+      "turn": 6,
+      "tokens_saved": 183,
+      "savings_ratio": 0.6399,
+      "baseline_total": 286,
+      "kernel_total": 103
+    },
+    {
+      "turn": 7,
+      "tokens_saved": 258,
+      "savings_ratio": 0.688,
+      "baseline_total": 375,
+      "kernel_total": 117
+    }
+  ],
+  "turns": [
+    {
+      "user": "By the way my name is Ada",
+      "intent": "plant",
+      "reply": "Got it \u2014 I'll remember your name is Ada.",
+      "slot": "fact.name"
+    },
+    {
+      "user": "good to see you",
+      "intent": "chitchat",
+      "reply": "OK.",
+      "slot": null
+    },
+    {
+      "user": "secret code for me is 4242",
+      "intent": "plant",
+      "reply": "Got it \u2014 code 4242 stored.",
+      "slot": "fact.code"
+    },
+    {
+      "user": "what name did i give you",
+      "intent": "query",
+      "reply": "My name is Ada.",
+      "slot": "fact.name"
+    },
+    {
+      "user": "what's the code i gave you",
+      "intent": "query",
+      "reply": "The secret code is 4242.",
+      "slot": "fact.code"
+    },
+    {
+      "user": "don't forget my item is brass key",
+      "intent": "plant",
+      "reply": "Got it \u2014 item brass key stored.",
+      "slot": "fact.item0"
+    },
+    {
+      "user": "what item did i mention",
+      "intent": "query",
+      "reply": "",
+      "slot": "fact.item0"
+    }
+  ]
+}

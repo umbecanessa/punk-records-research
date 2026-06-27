@@ -1,0 +1,6 @@
+{
+  "time": "2026-06-27T19:26:57.457460+00:00",
+  "experiment": "e7_nl_v5_messy",
+  "checkpoint": "greenfield\\checkpoints\\encoder_e7_best.pt",
+  "best_score": 9.0
+}

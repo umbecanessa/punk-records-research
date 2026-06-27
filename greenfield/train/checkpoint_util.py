@@ -82,21 +82,26 @@ def load_encoder_model(
     *,
     predict_slot: bool = False,
     predict_value: bool = False,
+    predict_event: bool = False,
     expand_vocab: bool = False,
 ) -> EventEncoderModel:
     ckpt = torch.load(Path(path), map_location=device, weights_only=False)
     hidden = int(ckpt.get("hidden", 128))
     predict_slot = predict_slot or bool(ckpt.get("predict_slot", False))
     predict_value = predict_value or bool(ckpt.get("predict_value", False))
+    predict_event = predict_event or bool(ckpt.get("predict_event", False))
     state = migrate_state_dict(ckpt["model"])
     if expand_vocab:
         vocab = current_vocab()
     else:
         vocab = ckpt.get("vocab") or _vocab_from_state(state)
+    nl_backbone = ckpt.get("nl_backbone", "mlp")
     model = EventEncoderModel(
         hidden=hidden,
         predict_slot=predict_slot,
         predict_value=predict_value,
+        predict_event=predict_event,
+        nl_backbone=nl_backbone,
         **vocab,
     )
     _load_compatible(model, state)

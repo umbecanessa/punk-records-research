@@ -24,6 +24,7 @@ datasets:
 |-------|----------|------|
 | Kernel law | `policies/*.json` + `KERNEL.md` | 8-opcode invariants, gas, overflow |
 | Encoder **E6** | `encoder_e6_best.pt` | Learned opcodes + slot keys + values |
+| NL parser **E7** | `encoder_e7_best.pt` | Learned intent/slot + percept value bootstrap |
 | Renderer **E3** | `renderer_e3_best.pt` | Untrusted text from storage |
 
 **Source code:** [github.com/umbecanessa/punk-records-research](https://github.com/umbecanessa/punk-records-research)
@@ -38,6 +39,7 @@ datasets:
 | Query accuracy | **1.0** all stages |
 | Render fidelity | **1.0** full stack |
 | Value exact match | **1.0** |
+| E7 NL parse (intent / slot / value) | **1.0 / 1.0 / 1.0** |
 
 Frozen reports in `eval/`. Reproduce with the GitHub repo + these weights.
 
@@ -53,6 +55,10 @@ huggingface-cli download wasnaga/punk-records-research-kernel-v0.1 --local-dir .
 | File | Description |
 |------|-------------|
 | `encoder_e6_best.pt` | Release encoder (~460 KB) |
+| `encoder_e7_best.pt` | NL event parser (~510 KB) |
+| `encoder_e10a_best.pt` | Open-phrasing NL parser v2, 96-char (~7 MB) |
+| `encoder_e9a_best.pt` | Transformer NL front (~3 MB) |
+| `renderer_e9b_best.pt` | Transformer renderer (~3 MB) |
 | `renderer_e3_best.pt` | Byte renderer (~5 MB) |
 | `stack.json` | Bundle manifest |
 | `policies/` | Kernel policy JSON |

@@ -1,0 +1,40 @@
+{
+  "time": "2026-06-27T19:31:53.765181+00:00",
+  "experiment": "e9b_transformer_renderer",
+  "params": 830176,
+  "best_val_exact": 1.0,
+  "checkpoint": "greenfield\\checkpoints\\renderer_e9b_best.pt",
+  "end_to_end": {
+    "mean_render_fidelity": 1.0,
+    "stages": {
+      "A": {
+        "render_fidelity": 1.0,
+        "n": 10
+      },
+      "B": {
+        "render_fidelity": 1.0,
+        "n": 10
+      },
+      "C": {
+        "render_fidelity": 1.0,
+        "n": 10
+      },
+      "D": {
+        "render_fidelity": 1.0,
+        "n": 10
+      },
+      "E": {
+        "render_fidelity": 1.0,
+        "n": 10
+      },
+      "F": {
+        "render_fidelity": 1.0,
+        "n": 10
+      },
+      "G": {
+        "render_fidelity": 1.0,
+        "n": 7
+      }
+    }
+  }
+}

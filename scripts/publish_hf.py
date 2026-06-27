@@ -63,6 +63,21 @@ def build_staging(*, clean: bool = True) -> Path:
     shutil.copy2(required[0], STAGING / "encoder_e6_best.pt")
     shutil.copy2(required[1], STAGING / "renderer_e3_best.pt")
 
+    e7 = ckpt / "encoder_e7_best.pt"
+    if e7.is_file():
+        shutil.copy2(e7, STAGING / "encoder_e7_best.pt")
+        log(f"included {e7.name}")
+
+    for optional in (
+        "encoder_e9a_best.pt",
+        "encoder_e10a_best.pt",
+        "renderer_e9b_best.pt",
+    ):
+        src = ckpt / optional
+        if src.is_file():
+            shutil.copy2(src, STAGING / optional)
+            log(f"included {optional}")
+
     policies = STAGING / "policies"
     policies.mkdir(exist_ok=True)
     for name in POLICY_FILES:
@@ -72,7 +87,14 @@ def build_staging(*, clean: bool = True) -> Path:
 
     eval_dir = STAGING / "eval"
     eval_dir.mkdir(exist_ok=True)
-    for name in ("encoder_e6_report.json", "renderer_e3_report.json"):
+    for name in (
+        "encoder_e6_report.json",
+        "encoder_e7_report.json",
+        "encoder_e9a_report.json",
+        "encoder_e10a_report.json",
+        "renderer_e3_report.json",
+        "renderer_e9b_report.json",
+    ):
         src = ckpt / name
         if src.is_file():
             shutil.copy2(src, eval_dir / name)
@@ -118,9 +140,14 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
         "--message",
-        default="Punk Records Research kernel v0.1 — E6 + E3 + policies",
+        default="Punk Records Research kernel v0.1 — E6 + E10a NL + E9b renderer + policies",
     )
     args = parser.parse_args()
+
+    if not args.dry_run:
+        from release_gate import run_release_validation
+
+        run_release_validation(cwd=REPO_ROOT)
 
     staging = build_staging()
     total_bytes = sum(p.stat().st_size for p in staging.rglob("*") if p.is_file())

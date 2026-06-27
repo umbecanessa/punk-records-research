@@ -1,5 +1,6 @@
 {
   "encoder": "greenfield/checkpoints/encoder_e6_best.pt",
+  "nl_parser": "greenfield/checkpoints/encoder_e7_best.pt",
   "renderer": "greenfield/checkpoints/renderer_e3_best.pt",
   "policy": "greenfield/deploy/policy.v0.json",
   "overflow_policy": "greenfield/deploy/policy.overflow.json",

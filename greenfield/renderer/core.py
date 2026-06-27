@@ -131,3 +131,30 @@ class LearnedRenderer(Renderer):
                 slot_id = SLOT_TO_ID["__none__"]
             parts.append(self.model.generate(slot_id, str(val), self.device))
         return " ".join(parts) if parts else "[unknown]"
+
+
+@dataclass
+class LearnedTransformerRenderer(Renderer):
+    """E9b — causal transformer; reads storage keys only (never writes)."""
+
+    model: "TransformerRendererModel"
+    device: torch.device
+
+    def render(self, state: MachineState, render_args: dict) -> str:
+        from greenfield.renderer.transformer_renderer import TransformerRendererModel
+
+        assert isinstance(self.model, TransformerRendererModel)
+        keys = render_args.get("keys", [])
+        parts = []
+        for key in keys:
+            key_s = str(key)
+            val = state.storage.slots.get(key_s)
+            if val is None:
+                val = state.working.last_read.get(key_s)
+            if val is None:
+                continue
+            slot_id = SLOT_TO_ID.get(key_s, SLOT_TO_ID["__none__"])
+            if slot_id >= self.model.slot_emb.num_embeddings:
+                slot_id = SLOT_TO_ID["__none__"]
+            parts.append(self.model.generate(slot_id, str(val), self.device))
+        return " ".join(parts) if parts else "[unknown]"

@@ -9,7 +9,7 @@ import torch
 from greenfield.encoder import OracleEncoder
 from greenfield.kernel import Kernel
 from greenfield.state_util import clone_machine_state
-from greenfield.train.features import ID_TO_OP, ID_TO_SLOT, MAX_STEP, featurize
+from greenfield.train.features import FEATURE_DIM, ID_TO_OP, ID_TO_SLOT, MAX_STEP, featurize
 from greenfield.train.checkpoint_util import load_encoder_model
 from greenfield.train.model import EventEncoderModel
 from greenfield.train.value_codec import decode_value_from_features
@@ -42,6 +42,7 @@ class LearnedEncoder:
         path: str | Path,
         *,
         device: torch.device | None = None,
+        stage: str = "B",
         use_learned_args: bool = True,
         use_learned_values: bool | None = None,
     ) -> LearnedEncoder:
@@ -54,7 +55,6 @@ class LearnedEncoder:
             predict_value=bool(ckpt.get("predict_value", False)),
         )
         stages = ckpt.get("stages") or []
-        stage = str(ckpt.get("stage_default", stages[0] if stages else "B"))
         learned_args = bool(ckpt.get("use_learned_args", use_learned_args))
         learned_vals = (
             bool(ckpt.get("use_learned_values", True))
@@ -152,15 +152,32 @@ class LearnedEncoder:
         lst[3] = min(int(lst[3]), self.model.stage_emb.num_embeddings - 1)
         lst[4] = min(int(lst[4]), self.model.step_emb.num_embeddings - 1)
         lst[5] = min(int(lst[5]), self.model.prev_op_emb.num_embeddings - 1)
+        while len(lst) < FEATURE_DIM:
+            lst.append(0.0)
         return torch.tensor(lst, dtype=torch.float32, device=self.device)
 
     def propose(self, event: EpisodeEvent, state: MachineState, kernel: Kernel) -> list[OpProposal]:
+        return self._propose_loop(event, state, kernel, obs_already=False)
+
+    def propose_after_obs(self, event: EpisodeEvent, state: MachineState, kernel: Kernel) -> list[OpProposal]:
+        """E7b: OBS already applied — opcode trace starts at PUT/GET (prev_op=OBS)."""
+        return self._propose_loop(event, state, kernel, obs_already=True)
+
+    def _propose_loop(
+        self,
+        event: EpisodeEvent,
+        state: MachineState,
+        kernel: Kernel,
+        *,
+        obs_already: bool,
+    ) -> list[OpProposal]:
         self._prepare_event(event, state)
         proposals: list[OpProposal] = []
-        prev: OpCode | None = None
+        prev: OpCode | None = OpCode.OBS if obs_already else None
         sim = clone_machine_state(state)
+        start_step = 1 if obs_already else 0
 
-        for step_idx in range(MAX_STEP):
+        for step_idx in range(start_step, MAX_STEP):
             fv = featurize(event, sim, stage=self.stage, step_idx=step_idx, prev_op=prev)
             x = self._tensor_features(fv)
             slot_id: int | None = None

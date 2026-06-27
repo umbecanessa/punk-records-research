@@ -33,6 +33,21 @@ def overflow_world(rng: random.Random, *, num_facts: int = 5) -> World:
     return World(facts=facts, tool_handles=handles)
 
 
+def quest_world(rng: random.Random) -> World:
+    """E7c: fixed trio of fact types for stage G."""
+    return World(
+        facts={
+            "fact.name": rng.choice(["Ada", "Lin", "Sam", "Rin"]),
+            "fact.code": str(rng.randint(1000, 9999)),
+            "fact.item0": rng.choice(["brass key", "old map", "red gem"]),
+        },
+        tool_handles={
+            "plant_fact": {"uri": "sim://plant_fact", "budget": 100},
+            "lookup": {"uri": "sim://lookup", "budget": 10},
+        },
+    )
+
+
 def sample_world(rng: random.Random, *, num_facts: int = 1) -> World:
     keys = ["fact.name", "fact.code", "fact.answer"]
     rng.shuffle(keys)

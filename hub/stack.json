@@ -1,14 +1,24 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "punk-records-research-kernel-v0.1",
   "encoder": "encoder_e6_best.pt",
+  "nl_parser": "encoder_e7_best.pt",
+  "nl_parser_v2": "encoder_e10a_best.pt",
+  "nl_transformer": "encoder_e9a_best.pt",
   "renderer": "renderer_e3_best.pt",
+  "renderer_v2": "renderer_e9b_best.pt",
   "policy": "policies/policy.v0.json",
   "overflow_policy": "policies/policy.overflow.json",
   "use_learned_args": true,
   "use_learned_values": true,
-  "curriculum_stages": "A,B,C,D,E,F",
+  "curriculum_stages": "A,B,C,D,E,F,G",
+  "chat_stack": {
+    "parser": "encoder_e10a_best.pt",
+    "renderer": "renderer_e9b_best.pt",
+    "encoder": "encoder_e6_best.pt"
+  },
   "code_repo": "https://github.com/umbecanessa/punk-records-research",
   "hf_repo": "wasnaga/punk-records-research-kernel-v0.1",
-  "notes": "Hub bundle — paths relative to this model repo root."
+  "space_demo": "https://huggingface.co/spaces/wasnaga/punk-records-research-demo",
+  "notes": "E10.1 — open phrasing NL + transformer renderer + kernel chat v1"
 }

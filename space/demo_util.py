@@ -15,12 +15,26 @@ from greenfield.eval_util import run_stage_batch, summarize_stages
 from greenfield.kernel import Kernel
 from greenfield.learned_encoder import LearnedEncoder
 from greenfield.renderer.core import ByteRendererModel, LearnedRenderer, TemplateRenderer
+from greenfield.chat_v1 import (
+    ChatSessionState,
+    default_chat_script,
+    init_chat_session,
+    load_chat_v1_stack,
+    run_chat_turn,
+    run_nl_chat_session,
+)
 from greenfield.renderer.templates import reference_text
 from greenfield.runner import load_policy, run_episode
 from greenfield.simulator import bind_tools, default_tool_executor, overflow_world, sample_world
 from greenfield.train.checkpoint_util import load_encoder_model
-from greenfield.parser.nl_script import script_from_nl
-from greenfield.types import EpisodeEvent, Intent
+from greenfield.nl_turn import (
+    default_quest_turns,
+    run_nl_episode_obs_first,
+    run_nl_long_session,
+    run_nl_overflow_episode,
+    run_nl_quest_episode,
+)
+from greenfield.types import EpisodeEvent, Intent, KernelRevert, MachineState, OpCode
 
 HF_MODEL_REPO = "wasnaga/punk-records-research-kernel-v0.1"
 CACHE = Path(__file__).resolve().parent / ".cache"
@@ -59,10 +73,49 @@ def policy_path(name: str) -> Path:
     return repo_root() / "greenfield" / "deploy" / name
 
 
+def resolve_checkpoint(name: str) -> Path:
+    """Local dev checkpoint or Hub download (Space runtime)."""
+    local = repo_root() / "greenfield" / "checkpoints" / name
+    if local.is_file():
+        return local
+    parent = repo_root().parent / "greenfield" / "checkpoints" / name
+    if parent.is_file():
+        return parent
+    return download_asset(name)
+
+
+def load_demo_chat_stack():
+    """E10 chat stack — prefers E10a parser + E9b renderer from Hub or local."""
+    root = repo_root()
+    parser_path = None
+    for parser_name in ("encoder_e10a_best.pt", "encoder_e9a_best.pt", "encoder_e7_best.pt"):
+        try:
+            parser_path = resolve_checkpoint(parser_name)
+            break
+        except Exception:
+            continue
+    if parser_path is None:
+        raise FileNotFoundError("no NL parser checkpoint on Hub or locally")
+    return load_chat_v1_stack(
+        root=root,
+        device=torch.device("cpu"),
+        e6=resolve_checkpoint("encoder_e6_best.pt"),
+        e9b=resolve_checkpoint("renderer_e9b_best.pt"),
+        parser_checkpoint=parser_path,
+    )
+
+
 class DemoStack:
     def __init__(self) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         enc_path = download_asset("encoder_e6_best.pt")
+        self.e7_path: Path | None = None
+        try:
+            self.e7_path = download_asset("encoder_e7_best.pt")
+        except Exception:
+            local = repo_root() / "greenfield" / "checkpoints" / "encoder_e7_best.pt"
+            if local.is_file():
+                self.e7_path = local
         ren_path = download_asset("renderer_e3_best.pt")
         ckpt = torch.load(enc_path, map_location=self.device, weights_only=False)
         self.enc_model = load_encoder_model(
@@ -292,37 +345,246 @@ def run_interactive(stage: str, seed: int, name: str | None = None) -> tuple[str
     )
 
 
+def format_tokens(tokens: dict) -> str:
+    if not tokens:
+        return "_(no token metrics)_"
+    return (
+        f"- baseline total: **{tokens.get('baseline_total_tokens', 0)}** tokens\n"
+        f"- kernel total: **{tokens.get('kernel_total_tokens', 0)}** tokens\n"
+        f"- **saved: {tokens.get('tokens_saved', 0)}** "
+        f"({100 * tokens.get('savings_ratio', 0):.1f}% · input saved {tokens.get('input_tokens_saved', 0)})"
+    )
+
+
+def format_token_curve(curve: list[dict]) -> str:
+    if not curve:
+        return "_(no token curve)_"
+    lines = [
+        "| Query | Saved | Ratio | Baseline | Kernel |",
+        "|------:|------:|------:|---------:|-------:|",
+    ]
+    for row in curve:
+        lines.append(
+            f"| {row['query_index']} "
+            f"| {row['tokens_saved']} "
+            f"| {100 * row['savings_ratio']:.1f}% "
+            f"| {row['baseline_total']} "
+            f"| {row['kernel_total']} |"
+        )
+    return "\n".join(lines)
+
+
+def _nl_trace_md(trace) -> str:
+    lines = []
+    for s in trace:
+        mark = "ok" if s.applied else f"REVERT: {s.revert_reason}"
+        utt = f" `{s.utterance}` →" if s.utterance else ""
+        lines.append(f"**{s.op}** ({s.event_intent}){utt} {mark}")
+    return "\n".join(lines)
+
+
 def run_nl_episode(plant_text: str, query_text: str, seed: int) -> tuple[str, str, str, str]:
-    script, err = script_from_nl(plant_text, query_text, seed=int(seed))
-    if err:
-        return f"**Parse error:** {err}", "", "", ""
+    try:
+        stack = DemoStack()
+        final, trace, metrics, err = run_nl_episode_obs_first(
+            plant_text,
+            query_text,
+            seed=int(seed),
+            policy=stack.base_policy,
+            encoder=stack.encoder_for("B"),
+            renderer=stack.learned_renderer,
+            parser_checkpoint=stack.e7_path,
+            stage="B",
+        )
+        if err:
+            return f"**Parse error:** {err}", "", "", ""
 
-    stack = DemoStack()
-    rng = random.Random(int(seed))
-    world = sample_world(rng, num_facts=1)
-    plant = script[0]
-    if plant.payload.get("slot") and plant.payload.get("value") is not None:
-        world.facts[str(plant.payload["slot"])] = str(plant.payload["value"])
+        world_lines = [f"- `{k}` → `{v}`" for k, v in final.storage.slots.items() if str(k).startswith("fact.")]
+        q_acc = metrics["query_hits"] / max(1, metrics["queries"])
+        parser_note = "E7 learned · OBS-first" if stack.e7_path else "template · OBS-first"
+        tok = metrics.get("tokens", {})
+        summary = (
+            f"### NL episode (E7b OBS-first)\n"
+            f"- parser: **{parser_note}**\n"
+            f"- plant: `{plant_text}`\n"
+            f"- query: `{query_text}`\n"
+            f"- query accuracy: **{q_acc:.0f}** · answer: **{metrics['answer'] or '(none)'}**\n\n"
+            f"### Token savings vs chat replay\n{format_tokens(tok)}"
+        )
+        return summary, "\n".join(world_lines), format_log(final), _nl_trace_md(trace)
+    except Exception as exc:
+        return f"**Error:** {exc}", "", str(exc), ""
 
-    enc = stack.encoder_for("B")
-    view = stack.learned_renderer
-    final, trace, metrics = run_traced_episode(
-        world=world,
-        script=script,
-        policy=stack.base_policy,
-        encoder=enc,
-        renderer=view,
-        seed=int(seed),
-        stage="B",
-    )
 
-    world_lines = [f"- `{k}` → `{v}`" for k, v in world.facts.items()]
-    trace_lines = [f"**{s.op}** ({s.event_intent})" for s in trace]
-    q_acc = metrics["query_hits"] / max(1, metrics["queries"])
-    summary = (
-        f"### NL episode (stage B filler)\n"
-        f"- plant: `{plant_text}`\n"
-        f"- query: `{query_text}`\n"
-        f"- query accuracy: **{q_acc:.0f}** · answer: **{metrics['answer'] or '(none)'}**"
-    )
-    return summary, "\n".join(world_lines), format_log(final), "\n".join(trace_lines)
+def run_nl_quest_demo(seed: int) -> tuple[str, str, str, str]:
+    try:
+        stack = DemoStack()
+        final, trace, metrics, err = run_nl_quest_episode(
+            default_quest_turns(),
+            seed=int(seed),
+            policy=stack.base_policy,
+            encoder=stack.encoder_for("G"),
+            renderer=stack.learned_renderer,
+            parser_checkpoint=stack.e7_path,
+        )
+        if err:
+            return f"**Quest error:** {err}", "", "", ""
+
+        answers = metrics.get("answers", {})
+        ans_lines = "\n".join(f"- `{k}` → **{v}**" for k, v in answers.items())
+        hot = fact_slots(final)
+        summary = (
+            "### Stage-G quest (3 facts via NL)\n"
+            f"- answers: {len(answers)} / 3\n\n"
+            f"{ans_lines}\n\n"
+            f"### Token savings vs chat replay\n{format_tokens(metrics.get('tokens', {}))}\n\n"
+            f"**Hot storage**\n"
+            + ("\n".join(f"- `{k}` = `{v}`" for k, v in hot.items()) if hot else "_(empty)_")
+        )
+        return summary, ans_lines, format_log(final), _nl_trace_md(trace)
+    except Exception as exc:
+        return f"**Error:** {exc}", "", str(exc), ""
+
+
+def run_nl_overflow_demo(seed: int) -> tuple[str, str, str, str]:
+    try:
+        stack = DemoStack()
+        final, trace, metrics, err = run_nl_overflow_episode(
+            seed=int(seed),
+            policy=stack.overflow_policy,
+            encoder=stack.encoder_for("F"),
+            renderer=TemplateRenderer(),
+            parser_checkpoint=stack.e7_path,
+        )
+        if err:
+            return f"**Overflow error:** {err}", "", "", ""
+
+        cold = cold_keys(final)
+        hot = fact_slots(final)
+        summary = (
+            "### Stage-F overflow (NL plant/query × 5 items)\n"
+            f"- overflow evictions: **{metrics.get('overflow_evictions', 0)}**\n"
+            f"- cold hits: **{metrics.get('cold_hits', 0)}**\n"
+            f"- hot slots: {', '.join(f'`{k}`' for k in hot) or '_(none)_'}\n"
+            f"- cold keys: {', '.join(f'`{k}`' for k in cold) or '_(none)_'}\n\n"
+            f"### Token savings vs chat replay\n{format_tokens(metrics.get('tokens', {}))}"
+        )
+        world = "\n".join(f"- `{k}` → `{v}`" for k, v in metrics.get("answers", {}).items())
+        return summary, world, format_log(final), _nl_trace_md(trace)
+    except Exception as exc:
+        return f"**Error:** {exc}", "", str(exc), ""
+
+
+def run_nl_long_session_demo(seed: int, num_pairs: int) -> tuple[str, str, str, str]:
+    try:
+        stack = DemoStack()
+        final, trace, metrics, err = run_nl_long_session(
+            num_pairs=int(num_pairs),
+            seed=int(seed),
+            policy=stack.base_policy,
+            encoder=stack.encoder_for("G"),
+            renderer=stack.learned_renderer,
+            parser_checkpoint=stack.e7_path,
+        )
+        if err:
+            return f"**Long session error:** {err}", "", "", ""
+
+        curve = metrics.get("token_curve", [])
+        q_acc = metrics["query_hits"] / max(1, metrics["queries"])
+        summary = (
+            f"### E8 long session ({int(num_pairs)} plant/query pairs)\n"
+            f"- query accuracy: **{q_acc:.0%}** "
+            f"({metrics['query_hits']}/{metrics['queries']})\n\n"
+            f"### Final token savings vs chat replay\n"
+            f"{format_tokens(metrics.get('tokens', {}))}\n\n"
+            f"### Token curve (after each query)\n"
+            f"{format_token_curve(curve)}"
+        )
+        hot = fact_slots(final)
+        world = "\n".join(f"- `{k}` = `{v}`" for k, v in hot.items()) or "_(empty)_"
+        return summary, world, format_log(final), _nl_trace_md(trace)
+    except Exception as exc:
+        return f"**Error:** {exc}", "", str(exc), ""
+
+
+def format_chat_transcript(turns: list[dict]) -> str:
+    lines = []
+    for row in turns:
+        lines.append(f"**You:** {row.get('user', '')}")
+        intent = row.get("intent", "?")
+        reply = row.get("reply", "")
+        lines.append(f"**Bot** ({intent}): {reply or '_(no reply)_'}")
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def run_chat_v1_demo(chat_text: str) -> tuple[str, str, str, str]:
+    try:
+        root = repo_root()
+        stack = load_demo_chat_stack()
+        lines = [ln.strip() for ln in str(chat_text).splitlines() if ln.strip()]
+        if not lines:
+            lines = default_chat_script()
+        final, trace, metrics, err = run_nl_chat_session(lines, stack=stack, token_curve=True)
+        if err:
+            return f"**Chat error:** {err}", "", "", ""
+
+        transcript = format_chat_transcript(metrics.get("turns", []))
+        hot = fact_slots(final)
+        summary = (
+            "### E10 chat v1 (E9a NL + E9b renderer + kernel STORAGE)\n"
+            f"- turns: **{metrics.get('user_turns', 0)}** · "
+            f"queries: **{metrics['query_hits']}/{metrics['queries']}** · "
+            f"reverts: **{metrics.get('reverts', 0)}**\n\n"
+            f"### Token savings vs chat replay\n{format_tokens(metrics.get('tokens', {}))}\n\n"
+            f"### Token curve\n{format_token_curve(metrics.get('token_curve', []))}\n\n"
+            f"### Transcript\n{transcript}\n\n"
+            f"**Hot storage**\n"
+            + ("\n".join(f"- `{k}` = `{v}`" for k, v in hot.items()) if hot else "_(empty)_")
+        )
+        storage = "\n".join(f"- `{k}` = `{v}`" for k, v in hot.items()) or "_(empty)_"
+        return summary, storage, format_log(final), _nl_trace_md(trace)
+    except FileNotFoundError as exc:
+        return f"**Missing E10 checkpoints:** {exc}", "", "", ""
+    except Exception as exc:
+        return f"**Error:** {exc}", "", str(exc), ""
+
+
+def _empty_chat_session() -> ChatSessionState | None:
+    try:
+        return init_chat_session(load_demo_chat_stack())
+    except FileNotFoundError:
+        return None
+
+
+def run_live_chat(message: str, history: list, session: ChatSessionState | None):
+    """Gradio Chatbot — one message at a time; kernel memory persists in session."""
+    if not str(message).strip():
+        return history, session or _empty_chat_session(), "", ""
+    try:
+        if session is None:
+            session = init_chat_session(load_demo_chat_stack())
+        session, reply, err = run_chat_turn(session, message)
+        if err:
+            history = history + [[message, f"*(error)* {err}"]]
+            return history, session, "", format_log(session.state)
+        history = history + [[message, reply]]
+        tok = session.ledger.to_dict()
+        stats = (
+            f"queries **{session.metrics['query_hits']}/{session.metrics['queries']}** · "
+            f"reverts **{session.metrics.get('reverts', 0)}** · "
+            f"saved **{tok.get('tokens_saved', 0)}** tok "
+            f"({100 * tok.get('savings_ratio', 0):.0f}%)"
+        )
+        return history, session, stats, format_log(session.state)
+    except FileNotFoundError as exc:
+        history = history + [[message, f"*(missing checkpoints)* {exc}"]]
+        return history, session, "", ""
+    except Exception as exc:
+        history = history + [[message, f"*(error)* {exc}"]]
+        return history, session, "", str(exc)
+
+
+def reset_live_chat():
+    session = _empty_chat_session()
+    return [], session, "Session reset.", ""
