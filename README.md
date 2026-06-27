@@ -83,6 +83,26 @@ python -u -m greenfield.train.train_renderer --device cuda
 
 ---
 
+## Hugging Face
+
+| Artifact | Link |
+|----------|------|
+| Weights | [wasnaga/punk-records-research-kernel-v0.1](https://huggingface.co/wasnaga/punk-records-research-kernel-v0.1) |
+| Demo Space | [wasnaga/punk-records-research-demo](https://huggingface.co/spaces/wasnaga/punk-records-research-demo) |
+
+Publish Space:
+
+```powershell
+cd punk-records-research
+python -u scripts/publish_space_hf.py --dry-run
+$env:HF_REPO_ID = "wasnaga/punk-records-research-demo"
+python -u scripts/publish_space_hf.py --repo-id $env:HF_REPO_ID
+```
+
+## Next research (E7)
+
+See [`docs/E7_RESEARCH.md`](docs/E7_RESEARCH.md) — NL parser, Space NL tab, richer worlds, real FORK/MERGE.
+
 ## Layout
 
 ```

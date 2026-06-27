@@ -1,0 +1,10 @@
+{
+  "fact_write_once": ["fact.name", "fact.code", "fact.answer"],
+  "plan_required_before_run": true,
+  "gas_per_episode": 10000,
+  "max_hot_fact_slots": 2,
+  "overflow_on_seal": true,
+  "promote_cold_on_get": true,
+  "allow_missing_get": false,
+  "max_working_hot": 32
+}
